@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 )
@@ -42,16 +43,52 @@ func main() {
 	}
 }
 
-func (fc *FlashCards) addCard(term, definition *string) {
-	fc.Terms[*term] = definition
-	fc.Definitions[*definition] = term
+func (fc *FlashCards) AddCard(term, definition string) {
+	fc.Terms[term] = &definition
+	fc.Definitions[definition] = &term
+}
+
+func (fc *FlashCards) AllTerms() []string {
+	all := make([]string, 0, len(fc.Terms))
+	for term := range fc.Terms {
+		all = append(all, term)
+	}
+	return all
+}
+
+func (fc *FlashCards) RandomTerms(num int) []string {
+	randomTerms := make([]string, 0, num)
+	allTerms := fc.AllTerms()
+	total := len(allTerms)
+
+	for i := 0; i < num; i++ {
+		randomTerms = append(randomTerms, allTerms[rand.Intn(total)])
+	}
+
+	return randomTerms
+}
+
+func (fc *FlashCards) Check(term string) {
+	definition := getString(fmt.Sprintf("Print the definition of \"%s\":", term))
+
+	if *fc.Terms[term] == definition {
+		fmt.Println("Correct!")
+	} else if t, ok := fc.Definitions[definition]; ok {
+		fmt.Printf(
+			"Wrong. The right answer is \"%s\", but your definition is correct for \"%s\".\n",
+			*fc.Terms[term],
+			*t,
+		)
+	} else {
+		fmt.Printf("Wrong. The right answer is \"%s\".\n", *fc.Terms[term])
+	}
 }
 
 func addCard() {
 	term := getCardInfo("card", getString("The card:"), &flashcards.Terms)
 	definition := getCardInfo("definition", getString("The definition of the card:"), &flashcards.Definitions)
 
-	flashcards.addCard(&term, &definition)
+	flashcards.AddCard(term, definition)
 
 	fmt.Printf("The pair (\"%s\":\"%s\") has been added.\n", term, definition)
 }
@@ -112,7 +149,7 @@ func importCards() {
 			return
 		}
 
-		flashcards.addCard(&term, &definition)
+		flashcards.AddCard(term, definition)
 		numCards++
 	}
 }
@@ -138,7 +175,12 @@ func exportCards() {
 }
 
 func quiz() {
-	// todo: stub
+	numCards := getInt("How many times to ask?")
+	terms := flashcards.RandomTerms(numCards)
+
+	for _, term := range terms {
+		flashcards.Check(term)
+	}
 }
 
 func getString(prompt string) string {
@@ -148,4 +190,13 @@ func getString(prompt string) string {
 	text, _ := reader.ReadString('\n')
 
 	return strings.TrimSpace(text)
+}
+
+func getInt(prompt string) int {
+	var num int
+
+	fmt.Println(prompt)
+	fmt.Scanln(&num)
+
+	return num
 }
