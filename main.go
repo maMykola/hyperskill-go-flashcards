@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -117,7 +118,23 @@ func importCards() {
 }
 
 func exportCards() {
-	// todo: stub
+	filename := getString("File name:")
+
+	file, err := os.Create(filename)
+	if err != nil {
+		fmt.Println(errors.Unwrap(err))
+		return
+	}
+	defer file.Close()
+
+	for term, definition := range flashcards.Terms {
+		file.WriteString(term)
+		file.WriteString("\n")
+		file.WriteString(*definition)
+		file.WriteString("\n\n")
+	}
+
+	fmt.Printf("%d cards have been saved.\n", len(flashcards.Terms))
 }
 
 func quiz() {
