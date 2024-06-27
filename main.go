@@ -48,6 +48,17 @@ func (fc *FlashCards) AddCard(term, definition string) {
 	fc.Definitions[definition] = &term
 }
 
+func (fc *FlashCards) RemoveCard(term string) bool {
+	if definition, ok := fc.Terms[term]; ok {
+		delete(fc.Terms, term)
+		delete(fc.Definitions, *definition)
+
+		return true
+	}
+
+	return false
+}
+
 func (fc *FlashCards) AllTerms() []string {
 	all := make([]string, 0, len(fc.Terms))
 	for term := range fc.Terms {
@@ -106,9 +117,7 @@ func getCardInfo(name, value string, list *map[string]*string) string {
 func removeCard() {
 	term := getString("Which card?")
 
-	if definition, ok := flashcards.Terms[term]; ok {
-		delete(flashcards.Terms, term)
-		delete(flashcards.Definitions, *definition)
+	if flashcards.RemoveCard(term) {
 		fmt.Println("The card has been removed.")
 	} else {
 		fmt.Printf("Can't remove \"%s\": there is no such card.\n", term)
