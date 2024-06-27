@@ -62,7 +62,15 @@ func getCardInfo(name, value string, list *map[string]*string) string {
 }
 
 func removeCard() {
-	// todo: stub
+	term := getString("Which card?")
+
+	if definition, ok := flashcards.Terms[term]; ok {
+		delete(flashcards.Terms, term)
+		delete(flashcards.Definitions, *definition)
+		fmt.Println("The card has been removed.")
+	} else {
+		fmt.Printf("Can't remove \"%s\": there is no such card.\n", term)
+	}
 }
 
 func importCards() {
