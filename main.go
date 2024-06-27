@@ -41,12 +41,16 @@ func main() {
 	}
 }
 
+func (fc *FlashCards) addCard(term, definition *string) {
+	fc.Terms[*term] = definition
+	fc.Definitions[*definition] = term
+}
+
 func addCard() {
 	term := getCardInfo("card", getString("The card:"), &flashcards.Terms)
 	definition := getCardInfo("definition", getString("The definition of the card:"), &flashcards.Definitions)
 
-	flashcards.Terms[term] = &definition
-	flashcards.Definitions[definition] = &term
+	flashcards.addCard(&term, &definition)
 
 	fmt.Printf("The pair (\"%s\":\"%s\") has been added.\n", term, definition)
 }
@@ -73,8 +77,43 @@ func removeCard() {
 	}
 }
 
+func readLine(scanner *bufio.Scanner) (string, bool) {
+	var text string
+	var ok = true
+
+	for text == "" && ok {
+		if ok = scanner.Scan(); ok {
+			text = strings.TrimSpace(scanner.Text())
+		}
+	}
+
+	return text, ok
+}
+
 func importCards() {
-	// todo: stub
+	filename := getString("File name:")
+
+	file, err := os.Open(filename)
+	if err != nil {
+		fmt.Println("File not found.")
+		return
+	}
+	defer file.Close()
+
+	numCards := 0
+	scanner := bufio.NewScanner(file)
+	for {
+		term, ok1 := readLine(scanner)
+		definition, ok2 := readLine(scanner)
+
+		if !ok1 || !ok2 {
+			fmt.Printf("%d cards have been loaded.\n", numCards)
+			return
+		}
+
+		flashcards.addCard(&term, &definition)
+		numCards++
+	}
 }
 
 func exportCards() {
