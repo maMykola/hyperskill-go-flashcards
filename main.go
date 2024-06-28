@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"errors"
+	"flag"
 	"fmt"
 	"math/rand"
 	"os"
@@ -25,6 +26,15 @@ var flashcards = FlashCards{
 var buffer strings.Builder
 
 func main() {
+	var importFrom, exportTo string
+
+	flag.StringVar(&importFrom, "import_from", "", "Load cards from the file")
+	flag.StringVar(&exportTo, "export_to", "", "Export cards to the file at exit")
+
+	flag.Parse()
+
+	importCards(importFrom)
+
 	for {
 		action := getString("Input the action (add, remove, import, export, ask, exit, log, hardest card, reset stats):")
 
@@ -34,9 +44,9 @@ func main() {
 		case "remove":
 			removeCard()
 		case "import":
-			importCards()
+			importCards(getString("File name:"))
 		case "export":
-			exportCards()
+			exportCards(getString("File name:"))
 		case "ask":
 			quiz()
 		case "log":
@@ -47,6 +57,7 @@ func main() {
 			resetStats()
 		case "exit":
 			display("Bye bye!\n")
+			exportCards(exportTo)
 			return
 		}
 
@@ -178,8 +189,10 @@ func readLine(scanner *bufio.Scanner) (string, bool) {
 	return text, ok
 }
 
-func importCards() {
-	filename := getString("File name:")
+func importCards(filename string) {
+	if filename == "" {
+		return
+	}
 
 	file, err := os.Open(filename)
 	if err != nil {
@@ -206,8 +219,10 @@ func importCards() {
 	}
 }
 
-func exportCards() {
-	filename := getString("File name:")
+func exportCards(filename string) {
+	if filename == "" {
+		return
+	}
 
 	file, err := os.Create(filename)
 	if err != nil {
