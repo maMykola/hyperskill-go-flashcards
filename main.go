@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -19,9 +20,11 @@ var flashcards = FlashCards{
 	Definitions: make(map[string]*string),
 }
 
+var buffer strings.Builder
+
 func main() {
 	for {
-		action := getString("Input the action (add, remove, import, export, ask, exit):")
+		action := getString("Input the action (add, remove, import, export, ask, exit, log, hardest card, reset stats):")
 
 		switch action {
 		case "add":
@@ -34,12 +37,18 @@ func main() {
 			exportCards()
 		case "ask":
 			quiz()
+		case "log":
+			saveLog()
+		case "hardest card":
+			hardestCard()
+		case "reset stats":
+			resetStats()
 		case "exit":
-			fmt.Println("Bye bye!")
+			display("Bye bye!\n")
 			return
 		}
 
-		fmt.Println()
+		display("\n")
 	}
 }
 
@@ -83,15 +92,15 @@ func (fc *FlashCards) Check(term string) {
 	definition := getString(fmt.Sprintf("Print the definition of \"%s\":", term))
 
 	if *fc.Terms[term] == definition {
-		fmt.Println("Correct!")
+		display("Correct!\n")
 	} else if t, ok := fc.Definitions[definition]; ok {
-		fmt.Printf(
+		display(fmt.Sprintf(
 			"Wrong. The right answer is \"%s\", but your definition is correct for \"%s\".\n",
 			*fc.Terms[term],
 			*t,
-		)
+		))
 	} else {
-		fmt.Printf("Wrong. The right answer is \"%s\".\n", *fc.Terms[term])
+		display(fmt.Sprintf("Wrong. The right answer is \"%s\".\n", *fc.Terms[term]))
 	}
 }
 
@@ -101,7 +110,7 @@ func addCard() {
 
 	flashcards.AddCard(term, definition)
 
-	fmt.Printf("The pair (\"%s\":\"%s\") has been added.\n", term, definition)
+	display(fmt.Sprintf("The pair (\"%s\":\"%s\") has been added.\n", term, definition))
 }
 
 func getCardInfo(name, value string, list *map[string]*string) string {
@@ -118,9 +127,9 @@ func removeCard() {
 	term := getString("Which card?")
 
 	if flashcards.RemoveCard(term) {
-		fmt.Println("The card has been removed.")
+		display("The card has been removed.\n")
 	} else {
-		fmt.Printf("Can't remove \"%s\": there is no such card.\n", term)
+		display(fmt.Sprintf("Can't remove \"%s\": there is no such card.\n", term))
 	}
 }
 
@@ -142,7 +151,7 @@ func importCards() {
 
 	file, err := os.Open(filename)
 	if err != nil {
-		fmt.Println("File not found.")
+		display("File not found.\n")
 		return
 	}
 	defer file.Close()
@@ -154,7 +163,7 @@ func importCards() {
 		definition, ok2 := readLine(scanner)
 
 		if !ok1 || !ok2 {
-			fmt.Printf("%d cards have been loaded.\n", numCards)
+			display(fmt.Sprintf("%d cards have been loaded.\n", numCards))
 			return
 		}
 
@@ -168,7 +177,7 @@ func exportCards() {
 
 	file, err := os.Create(filename)
 	if err != nil {
-		fmt.Println(errors.Unwrap(err))
+		display(errors.Unwrap(err).Error(), "\n")
 		return
 	}
 	defer file.Close()
@@ -180,7 +189,7 @@ func exportCards() {
 		file.WriteString("\n\n")
 	}
 
-	fmt.Printf("%d cards have been saved.\n", len(flashcards.Terms))
+	display(fmt.Sprintf("%d cards have been saved.\n", len(flashcards.Terms)))
 }
 
 func quiz() {
@@ -192,20 +201,53 @@ func quiz() {
 	}
 }
 
+func saveLog() {
+	filename := getString("File name:")
+
+	file, err := os.Create(filename)
+	if err != nil {
+		display(errors.Unwrap(err).Error(), "\n")
+		return
+	}
+	defer file.Close()
+
+	file.WriteString(buffer.String())
+
+	display("The log has been saved.\n")
+}
+
+func hardestCard() {
+	// todo: stub
+}
+
+func resetStats() {
+	buffer.Reset()
+	fmt.Println("Card statistics have been reset.")
+}
+
 func getString(prompt string) string {
-	reader := bufio.NewReader(os.Stdin)
-
-	fmt.Println(prompt)
-	text, _ := reader.ReadString('\n')
-
-	return strings.TrimSpace(text)
+	display(prompt, "\n")
+	return strings.TrimSpace(readString())
 }
 
 func getInt(prompt string) int {
-	var num int
-
-	fmt.Println(prompt)
-	fmt.Scanln(&num)
-
+	input := getString(prompt)
+	num, _ := strconv.Atoi(input)
 	return num
+}
+
+func display(text ...string) {
+	for _, t := range text {
+		fmt.Print(t)
+		buffer.WriteString(t)
+	}
+}
+
+func readString() string {
+	reader := bufio.NewReader(os.Stdin)
+	text, _ := reader.ReadString('\n')
+
+	buffer.WriteString(text)
+
+	return text
 }
