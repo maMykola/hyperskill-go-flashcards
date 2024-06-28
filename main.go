@@ -259,7 +259,7 @@ func hardestCard() {
 	} else if len(hardestCards) == 1 {
 		display(fmt.Sprintf("The hardest card is \"%s\". You have %d errors answering it.\n", hardestCards[0], numErrors))
 	} else {
-		display(fmt.Sprintf("The hardest cards are \"%s\".", strings.Join(hardestCards, "\", \"")))
+		display(fmt.Sprintf("The hardest cards are \"%s\".\n", strings.Join(hardestCards, "\", \"")))
 	}
 }
 
